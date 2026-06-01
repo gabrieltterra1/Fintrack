@@ -34,10 +34,9 @@ a{color:#60a5fa;}
 #app{padding:12px 12px 100px;}
 
 /* ── cards ── */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:6px;margin-bottom:12px;}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;}
 .kpi-card{background:#13151c;border:1px solid #1e2128;border-radius:12px;padding:10px 12px;}
-.kpi-card.full{grid-column:1/-1;}
-.kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(15px,5vw,20px);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(13px,4.5vw,20px);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .card-shortcuts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;}
 .card-btn{border-radius:12px;padding:9px 8px;text-align:left;display:flex;flex-direction:column;gap:2px;border:none;width:100%;}
 
@@ -231,6 +230,12 @@ a{color:#60a5fa;}
     <div style="font-size:11px;color:#555;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Meses encontrados — corrija se necessário</div>
     <div id="scan-months-list" style="margin-bottom:8px;max-height:260px;overflow-y:auto;"></div>
     <button onclick="addScanMonth()" style="background:#1e2128;color:#888;border-radius:10px;padding:10px;font-size:12px;width:100%;margin-bottom:12px;">+ adicionar mês</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;" onclick="toggleScanReplace()">
+      <div id="scan-replace-track" style="width:36px;height:20px;border-radius:99px;background:#1e2128;border:1px solid #2a2d35;position:relative;flex-shrink:0;transition:all .2s;">
+        <div id="scan-replace-thumb" style="position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:99px;background:#555;transition:all .2s;"></div>
+      </div>
+      <span style="font-size:12px;color:#888;">Substituir se já existir nesse mês</span>
+    </div>
     <div style="background:#1a1d24;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;">
       <span style="font-size:12px;color:#555;">Total selecionado</span>
       <span id="scan-total" style="font-size:14px;font-weight:600;"></span>
@@ -352,10 +357,10 @@ function render(){
 
   // KPIs
   document.getElementById("kpi-grid").innerHTML=[
-    {l:"receita",v:inc,c:"#4ade80",full:false},
-    {l:"gastos", v:exp,c:"#f87171",full:false},
-    {l:"saldo",  v:bal,c:bal>=0?"#60a5fa":"#fb923c",full:true},
-  ].map(k=>`<div class="kpi-card${k.full?" full":""}">
+    {l:"receita",v:inc,c:"#4ade80"},
+    {l:"gastos", v:exp,c:"#f87171"},
+    {l:"saldo",  v:bal,c:bal>=0?"#60a5fa":"#fb923c"},
+  ].map(k=>`<div class="kpi-card">
     <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;">${k.l}</div>
     <div class="kpi-val" style="color:${k.c};">${fmtBRL(k.v)}</div>
   </div>`).join("");
@@ -402,16 +407,21 @@ function renderContent(vis,inc,exp){
 
 function renderOverview(el,vis,exp){
   const bycat={};
-  vis.filter(e=>e.type==="expense").forEach(e=>{bycat[e.category]=(bycat[e.category]||0)+e.amount;});
+  vis.filter(e=>e.type==="expense").forEach(e=>{
+    // merge all card categories into "Cartões"
+    const key=CARD_BY_CAT[e.category]?"Cartões":e.category;
+    bycat[key]=(bycat[key]||0)+e.amount;
+  });
   const sorted=Object.entries(bycat).sort((a,b)=>b[1]-a[1]);
   if(!sorted.length){el.innerHTML=`<div style="color:#555;font-size:13px;text-align:center;padding:40px;">nenhum gasto neste mês</div>`;return;}
   el.innerHTML=sorted.map(([cat,amt])=>{
     const pct=exp>0?(amt/exp*100):0;
-    const card=CARD_BY_CAT[cat];
+    const isCards=cat==="Cartões";
+    const barColor=isCards?"#a855f7":"#f87171";
     return `<div style="background:#13151c;border:1px solid #1e2128;border-radius:12px;padding:12px;margin-bottom:8px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <div style="display:flex;align-items:center;gap:7px;">
-          ${card?`<span style="width:8px;height:8px;border-radius:99px;background:${card.bg};flex-shrink:0;display:inline-block;"></span>`:""}
+          ${isCards?`<span style="width:8px;height:8px;border-radius:99px;background:#a855f7;flex-shrink:0;display:inline-block;"></span>`:""}
           <span style="font-size:12px;">${cat}</span>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
@@ -420,7 +430,7 @@ function renderOverview(el,vis,exp){
         </div>
       </div>
       <div style="background:#1e2128;border-radius:99px;height:4px;">
-        <div style="height:100%;width:${pct}%;background:${card?card.bg:"#f87171"};border-radius:99px;opacity:.8;"></div>
+        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:99px;opacity:.8;"></div>
       </div>
     </div>`;
   }).join("");
@@ -713,7 +723,7 @@ function saveSettings(){setApiKey(document.getElementById("api-key-input").value
 let scanState={cardId:null,files:[],months:[]};
 
 function openScanModal(){
-  scanState={cardId:null,files:[],months:[]};
+  scanState={cardId:null,files:[],months:[],replace:false};
   document.getElementById("scan-card-btns").innerHTML=CARDS.map(c=>`
     <button onclick="selectScanCard('${c.id}')" id="scanbtn-${c.id}"
       style="flex:1;padding:10px 6px;border-radius:10px;font-size:11px;font-family:inherit;
@@ -895,9 +905,21 @@ function addScanMonth(){
   scanState.months.push({month:m,year:y,amount:0,selected:true,isCurrent:false});
   renderScanMonths();
 }
+function toggleScanReplace(){
+  scanState.replace=!scanState.replace;
+  const on=scanState.replace;
+  document.getElementById("scan-replace-track").style.background=on?"#166534":"#1e2128";
+  document.getElementById("scan-replace-track").style.borderColor=on?"#4ade80":"#2a2d35";
+  document.getElementById("scan-replace-thumb").style.left=on?"17px":"2px";
+  document.getElementById("scan-replace-thumb").style.background=on?"#4ade80":"#555";
+}
 function commitScan(){
   const card=CARDS.find(c=>c.id===scanState.cardId); if(!card) return;
   scanState.months.filter(m=>m.selected&&m.amount>0).forEach(m=>{
+    if(scanState.replace){
+      // remove existing entries for same card+month+year
+      state.entries=state.entries.filter(e=>!(e.category===card.category&&e.month===m.month&&e.year===m.year));
+    }
     state.entries.push({id:genId(),type:"expense",desc:`Fatura ${card.shortLabel}`,amount:m.amount,category:card.category,recurrent:"never",month:m.month,year:m.year});
   });
   closeScanModal();
