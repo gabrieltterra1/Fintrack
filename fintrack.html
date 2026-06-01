@@ -34,10 +34,11 @@ a{color:#60a5fa;}
 #app{padding:12px 12px 100px;}
 
 /* ── cards ── */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
-.kpi-card{background:#13151c;border:1px solid #1e2128;border-radius:12px;padding:12px;}
-.card-shortcuts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
-.card-btn{border-radius:12px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:2px;border:none;width:100%;}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;}
+.kpi-card{background:#13151c;border:1px solid #1e2128;border-radius:12px;padding:10px 8px;}
+.kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(13px,4vw,18px);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.card-shortcuts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;}
+.card-btn{border-radius:12px;padding:9px 8px;text-align:left;display:flex;flex-direction:column;gap:2px;border:none;width:100%;}
 
 /* ── tabs ── */
 .tabs{display:flex;gap:3px;background:#13151c;border:1px solid #1e2128;border-radius:10px;padding:3px;margin-bottom:12px;}
@@ -354,8 +355,8 @@ function render(){
     {l:"gastos", v:exp,c:"#f87171"},
     {l:"saldo",  v:bal,c:bal>=0?"#60a5fa":"#fb923c"},
   ].map(k=>`<div class="kpi-card">
-    <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">${k.l}</div>
-    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:${k.c};">${fmtBRL(k.v)}</div>
+    <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;">${k.l}</div>
+    <div class="kpi-val" style="color:${k.c};">${fmtBRL(k.v)}</div>
   </div>`).join("");
 
   // savings
@@ -775,22 +776,70 @@ async function doOcrScan(){
 }
 function parseOcr(text){
   const lines=text.split(/\n/).map(l=>l.trim()).filter(Boolean);
-  const res=[]; let lastM=null, lastY=today.getFullYear();
-  const brlRx=/R\$\s*([\d.,]+)/gi;
-  const mRx=new RegExp(`\\b(${Object.keys(MONTH_MAP).join("|")})\\b`,"i");
-  lines.forEach(line=>{
+  const res=[]; let lastY=today.getFullYear();
+  const brlRx=/R\$\s*([\d.,]+)/g;
+  const mRx=new RegExp(`\\b(${Object.keys(MONTH_MAP).join("|")})\\b`,"gi");
+
+  // Strategy 1: find lines with MULTIPLE month names (e.g. "Jul Ago Set Out")
+  // then pair with the NEXT line that has multiple R$ values
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
     const yM=line.match(/\b(20\d{2})\b/); if(yM) lastY=parseInt(yM[1]);
-    const mM=line.match(mRx); if(mM) lastM=MONTH_MAP[mM[1].toLowerCase()];
-    [...line.matchAll(brlRx)].forEach(bm=>{
-      const v=parseFloat(bm[1].replace(/\./g,"").replace(",","."));
-      if(isNaN(v)||v<=0||v>99999) return;
-      const inM=line.match(mRx); const m=inM?MONTH_MAP[inM[1].toLowerCase()]:lastM;
-      if(m===null||m===undefined) return;
-      const isCurrent=/fatura\s*aberta|atual/i.test(line);
-      if(!res.find(r=>r.month===m&&r.year===lastY))
-        res.push({month:m,year:lastY,amount:v,selected:true,isCurrent});
-    });
-  });
+
+    // find all month names on this line
+    const monthMatches=[...line.matchAll(mRx)];
+    if(monthMatches.length>=2){
+      // look ahead up to 3 lines for values
+      for(let j=i+1;j<=Math.min(i+3,lines.length-1);j++){
+        const vals=[...lines[j].matchAll(brlRx)];
+        if(vals.length>=2){
+          // pair each month with corresponding value
+          monthMatches.forEach((mm,idx)=>{
+            if(idx>=vals.length) return;
+            const m=MONTH_MAP[mm[1].toLowerCase()];
+            const v=parseFloat(vals[idx][1].replace(/\./g,"").replace(",","."));
+            if(m===undefined||isNaN(v)||v<=0||v>99999) return;
+            // guess year: if month > current month, it's probably last year
+            let y=lastY;
+            if(m>today.getMonth()&&y===today.getFullYear()) y=today.getFullYear()-1;
+            if(!res.find(r=>r.month===m&&r.year===y))
+              res.push({month:m,year:y,amount:v,selected:true,isCurrent:false});
+          });
+          break;
+        }
+      }
+    }
+
+    // Strategy 2: single month + value on same line or adjacent
+    if(monthMatches.length===1){
+      const m=MONTH_MAP[monthMatches[0][1].toLowerCase()];
+      let y=lastY;
+      if(m>today.getMonth()&&y===today.getFullYear()) y=today.getFullYear()-1;
+      const vals=[...line.matchAll(brlRx)];
+      if(vals.length>=1){
+        const v=parseFloat(vals[0][1].replace(/\./g,"").replace(",","."));
+        if(!isNaN(v)&&v>0&&v<=99999&&!res.find(r=>r.month===m&&r.year===y))
+          res.push({month:m,year:y,amount:v,selected:true,isCurrent:false});
+      }
+    }
+
+    // Strategy 3: "Fatura aberta R$ X.XXX,XX"
+    if(/fatura\s*aberta/i.test(line)){
+      const vals=[...line.matchAll(brlRx)];
+      // also check next line
+      const nextVals=i+1<lines.length?[...lines[i+1].matchAll(brlRx)]:[];
+      const allVals=[...vals,...nextVals];
+      if(allVals.length){
+        const v=parseFloat(allVals[0][1].replace(/\./g,"").replace(",","."));
+        if(!isNaN(v)&&v>0&&v<=99999){
+          const m=today.getMonth(); // fatura aberta = mes atual
+          if(!res.find(r=>r.month===m&&r.year===today.getFullYear()))
+            res.push({month:m,year:today.getFullYear(),amount:v,selected:true,isCurrent:true});
+        }
+      }
+    }
+  }
+
   res.sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
   if(!res.length) res.push({month:today.getMonth(),year:today.getFullYear(),amount:0,selected:true,isCurrent:true});
   return res;
