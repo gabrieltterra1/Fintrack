@@ -463,7 +463,14 @@ function renderEntries(el,vis){
       ${!list.length?`<div style="color:#333;font-size:12px;">sem registros</div>`:""}
       ${list.map(e=>{
         const card=CARD_BY_CAT[e.category];
-        const recLabel=e.recurrent==="always"||e.recurrent===true?"sempre":typeof e.recurrent==="number"?e.recurrent+"x":"";
+        let recLabel="";
+        if(e.recurrent==="always"||e.recurrent===true) recLabel="sempre";
+        else if(typeof e.recurrent==="number"){
+          const startAbs=e.year*12+e.month;
+          const viewAbs=state.viewYear*12+state.viewMonth;
+          const parcela=viewAbs-startAbs+1;
+          recLabel=`${parcela}/${e.recurrent}`;
+        }
         return `<div class="entry-row">
           ${card?`<span style="width:3px;height:36px;border-radius:99px;background:${card.bg};flex-shrink:0;"></span>`:""}
           <div style="flex:1;min-width:0;">
