@@ -36,9 +36,10 @@ a{color:#60a5fa;}
 /* ── cards ── */
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;}
 .kpi-card{background:#13151c;border:1px solid #1e2128;border-radius:12px;padding:10px 12px;}
-.kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(13px,4.5vw,20px);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.card-shortcuts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;}
-.card-btn{border-radius:12px;padding:9px 8px;text-align:left;display:flex;flex-direction:column;gap:2px;border:none;width:100%;}
+.kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(12px,3.8vw,18px);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-shortcuts{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.card-shortcuts::-webkit-scrollbar{display:none;}
+.card-btn{border-radius:12px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:3px;border:none;min-width:150px;flex-shrink:0;}
 
 /* ── tabs ── */
 .tabs{display:flex;gap:3px;background:#13151c;border:1px solid #1e2128;border-radius:10px;padding:3px;margin-bottom:12px;}
@@ -379,12 +380,12 @@ function render(){
     const due=card.getDueDate(state.viewMonth,state.viewYear);
     const pending=state.entries.filter(e=>e.category===card.category&&e.type==="expense"&&(e.year*12+e.month)>=nowAbs).reduce((s,e)=>s+e.amount,0);
     return `<button class="card-btn" style="background:${card.bg};" onclick="openCardModal('${card.id}')">
-      <div style="font-size:8px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;">${card.shortLabel}</div>
-      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#fff;margin-top:2px;">${fmtBRL(spend)}</div>
-      <div style="font-size:8px;color:rgba(255,255,255,.5);margin-top:2px;">venc ${fmtDate(due)}</div>
-      <div style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.18);">
-        <div style="font-size:7px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.5px;">a pagar</div>
-        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:rgba(255,255,255,.9);">${fmtBRL(pending)}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;">${card.shortLabel}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#fff;margin-top:3px;">${fmtBRL(spend)}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.5);margin-top:2px;">venc ${fmtDate(due)} · pag dia ${card.payDay}</div>
+      <div style="margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.2);">
+        <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;">a pagar</div>
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:rgba(255,255,255,.9);margin-top:2px;">${fmtBRL(pending)}</div>
       </div>
     </button>`;
   }).join("");
