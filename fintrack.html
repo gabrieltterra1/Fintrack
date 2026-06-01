@@ -276,13 +276,24 @@ a{color:#60a5fa;}
     <input class="field-input" id="api-key-input" type="password" placeholder="sk-ant-…" style="margin-bottom:6px;">
     <div style="font-size:11px;color:#555;">Obtenha em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></div>
   </div>
+  <div style="border-top:1px solid #1e2128;margin:16px 0;"></div>
+  <div style="font-size:12px;color:#888;margin-bottom:12px;">Backup dos dados — exporta todos os lançamentos para Excel e importa de volta quando precisar.</div>
+  <div class="btn-row" style="margin-bottom:10px;">
+    <button onclick="exportExcel()" style="flex:1;background:#1a2a3a;color:#60a5fa;border:1px solid #2a4060;border-radius:12px;padding:13px 0;font-size:13px;font-family:inherit;font-weight:600;">⬇ Exportar Excel</button>
+  </div>
+  <div class="btn-row" style="margin-bottom:16px;">
+    <button onclick="document.getElementById('import-input').click()" style="flex:1;background:#1a1d24;color:#888;border:1px solid #2a2d35;border-radius:12px;padding:13px 0;font-size:13px;font-family:inherit;">⬆ Importar Excel</button>
+    <input type="file" id="import-input" accept=".xlsx,.csv" style="display:none;" onchange="importExcel(this)">
+  </div>
+  <div id="import-msg" style="display:none;font-size:12px;color:#4ade80;margin-bottom:12px;text-align:center;"></div>
   <div class="btn-row">
     <button class="btn-cancel" onclick="closeSettings()">Cancelar</button>
-    <button onclick="saveSettings()" class="btn-primary" style="background:#14532d;color:#4ade80;">Salvar</button>
+    <button onclick="saveSettings()" class="btn-primary" style="background:#14532d;color:#4ade80;">Salvar API Key</button>
   </div>
  </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 // ══════════════════════════════════════════════════════
 //  CONSTANTES
@@ -772,6 +783,76 @@ let deleteId=null;
 function openDeleteModal(id){deleteId=id;document.getElementById("modal-delete").style.display="flex";}
 function closeDeleteModal(){deleteId=null;document.getElementById("modal-delete").style.display="none";}
 function confirmDelete(){if(deleteId)state.entries=state.entries.filter(e=>e.id!==deleteId);closeDeleteModal();render();}
+
+// ══════════════════════════════════════════════════════
+//  EXPORT / IMPORT EXCEL
+// ══════════════════════════════════════════════════════
+function exportExcel(){
+  // Build rows
+  const rows = [["id","tipo","descricao","valor","categoria","recorrencia","mes","ano"]];
+  state.entries.forEach(e=>{
+    let rec = e.recurrent;
+    if(rec===true||rec==="always") rec="sempre";
+    else if(rec===false||rec==="never") rec="nunca";
+    else if(typeof rec==="number") rec=rec; // keep as number
+    rows.push([e.id, e.type, e.desc, e.amount, e.category, rec, e.month, e.year]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  // Column widths
+  ws["!cols"] = [8,8,30,12,20,12,6,6].map(w=>({wch:w}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Lançamentos");
+  XLSX.writeFile(wb, `fintrack_backup_${today.getFullYear()}${String(today.getMonth()+1).padStart(2,"0")}${String(today.getDate()).padStart(2,"0")}.xlsx`);
+}
+
+function importExcel(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try {
+      const wb = XLSX.read(e.target.result, {type:"array"});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+      if(!rows.length){ showImportMsg("Arquivo vazio.","#f87171"); return; }
+      // skip header row
+      const entries = [];
+      rows.slice(1).forEach(r=>{
+        if(!r[0]) return; // skip empty rows
+        let rec = r[5];
+        if(rec==="sempre") rec="always";
+        else if(rec==="nunca") rec="never";
+        else if(!isNaN(Number(rec))&&rec!=="") rec=Number(rec);
+        else rec="never";
+        const amount = parseFloat(r[3]);
+        if(isNaN(amount)) return;
+        entries.push({
+          id:   String(r[0])||genId(),
+          type: String(r[1])==="income"?"income":"expense",
+          desc: String(r[2]||""),
+          amount,
+          category: String(r[4]||"Outros"),
+          recurrent: rec,
+          month: parseInt(r[6])||0,
+          year:  parseInt(r[7])||today.getFullYear(),
+        });
+      });
+      if(!entries.length){ showImportMsg("Nenhum dado encontrado.","#f87171"); return; }
+      state.entries = entries;
+      saveState(); render();
+      showImportMsg(`✓ ${entries.length} lançamentos importados!`,"#4ade80");
+      input.value="";
+    } catch(err){
+      showImportMsg("Erro ao ler arquivo: "+err.message,"#f87171");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showImportMsg(msg,color){
+  const el=document.getElementById("import-msg");
+  el.textContent=msg; el.style.color=color; el.style.display="block";
+  setTimeout(()=>el.style.display="none",4000);
+}
 
 // ══════════════════════════════════════════════════════
 //  SETTINGS
