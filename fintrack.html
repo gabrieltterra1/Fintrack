@@ -6,11 +6,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>fintrack.</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  /* Fonte display — usa system-ui bold que sempre está no Android */
+  .syne { font-family: 'Syne', system-ui, -apple-system, 'Segoe UI', sans-serif; font-weight: 900; letter-spacing: -0.02em; }
+</style>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow-x:hidden;}
-body{background:#0d0f14;color:#e8e4dc;font-family:'DM Mono','Courier New',monospace;font-size:14px;}
+body{background:#0d0f14;color:#e8e4dc;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;}
 button{border:none;cursor:pointer;font-family:inherit;transition:background .15s,transform .1s;}
 button:active{transform:scale(.96);}
 input,select{outline:none;border:none;background:none;font-family:inherit;color:#e8e4dc;font-size:14px;}
@@ -37,7 +40,7 @@ a{color:#60a5fa;}
 .kpi-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
 .kpi-card{background:#13151c;border:1px solid #1e2128;border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
 .kpi-card.wide{}
-.kpi-val{font-family:'Syne',sans-serif!important;font-weight:800!important;font-size:24px!important;white-space:nowrap;line-height:1.1;-webkit-font-smoothing:antialiased;}
+.kpi-val{font-family:system-ui,-apple-system,'Segoe UI',sans-serif!important;font-weight:800!important;font-size:24px!important;white-space:nowrap;line-height:1.1;-webkit-font-smoothing:antialiased;}
 .card-shortcuts{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .card-shortcuts::-webkit-scrollbar{display:none;}
 .card-btn{border-radius:12px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:3px;border:none;min-width:150px;flex-shrink:0;}
@@ -82,7 +85,7 @@ a{color:#60a5fa;}
 <!-- HEADER -->
 <div id="header">
   <div id="header-logo">
-    <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px;">fintrack<span style="color:#4ade80;">.</span></div>
+    <div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px;">fintrack<span style="color:#4ade80;">.</span></div>
   </div>
   <div id="header-actions">
     <button id="btn-settings" style="background:#1a1d24;border:1px solid #2a2d35;color:#888;border-radius:8px;padding:7px 10px;font-size:12px;">⚙</button>
@@ -133,7 +136,7 @@ a{color:#60a5fa;}
 <div id="modal-entry" class="overlay" style="display:none;" onclick="if(event.target===this)closeEntryModal()">
  <div class="sheet" onclick="event.stopPropagation()">
   <div class="sheet-handle"></div>
-  <div id="modal-entry-title" style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin-bottom:18px;"></div>
+  <div id="modal-entry-title" style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:800;font-size:17px;margin-bottom:18px;"></div>
   <div class="mb"><div class="field-label">Descrição</div><input class="field-input" id="f-desc" placeholder="ex: Netflix" autocomplete="off"></div>
   <div class="mb"><div class="field-label">Valor (R$)</div><input class="field-input" id="f-amount" type="number" inputmode="decimal" placeholder="0,00"></div>
   <div class="mb"><div class="field-label">Categoria</div><select class="field-input" id="f-category"></select></div>
@@ -166,10 +169,10 @@ a{color:#60a5fa;}
   <div class="sheet-handle"></div>
   <div id="card-modal-header" style="border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
     <div>
-      <div id="card-modal-name" style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#fff;"></div>
+      <div id="card-modal-name" style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:800;font-size:16px;color:#fff;"></div>
       <div id="card-modal-dates" style="font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;"></div>
     </div>
-    <div id="card-modal-total" style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#fff;"></div>
+    <div id="card-modal-total" style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:17px;font-weight:800;color:#fff;"></div>
   </div>
   <!-- tabs -->
   <div style="display:flex;gap:3px;background:#1a1d24;border-radius:10px;padding:3px;margin-bottom:14px;">
@@ -221,7 +224,7 @@ a{color:#60a5fa;}
  <div class="sheet" onclick="event.stopPropagation()">
   <div class="sheet-handle"></div>
   <div id="scan-step1">
-    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin-bottom:4px;">Scan de Fatura</div>
+    <div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:800;font-size:17px;margin-bottom:4px;">Scan de Fatura</div>
     <div style="font-size:12px;color:#555;margin-bottom:16px;">Escolha o cartão e adicione os prints.</div>
     <div id="scan-card-btns" style="display:flex;gap:8px;margin-bottom:16px;"></div>
     <div class="drop-zone mb" id="scan-drop"
@@ -267,7 +270,7 @@ a{color:#60a5fa;}
 <div id="modal-settings" class="overlay" style="display:none;" onclick="if(event.target===this)closeSettings()">
  <div class="sheet" onclick="event.stopPropagation()">
   <div class="sheet-handle"></div>
-  <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin-bottom:4px;">Configurações</div>
+  <div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:800;font-size:17px;margin-bottom:4px;">Configurações</div>
   <div style="font-size:12px;color:#555;margin-bottom:18px;">API key para scan inteligente (opcional).</div>
   <div class="mb"><div class="field-label">Anthropic API Key</div>
     <input class="field-input" id="api-key-input" type="password" placeholder="sk-ant-…" style="margin-bottom:6px;">
@@ -395,11 +398,11 @@ function render(){
     const pending=state.entries.filter(e=>e.category===card.category&&e.type==="expense"&&(e.year*12+e.month)>=nowAbs).reduce((s,e)=>s+e.amount,0);
     return `<button class="card-btn" style="background:${card.bg};" onclick="openCardModal('${card.id}')">
       <div style="font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;">${card.shortLabel}</div>
-      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#fff;margin-top:3px;">${fmtBRL(spend)}</div>
+      <div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:16px;font-weight:800;color:#fff;margin-top:3px;">${fmtBRL(spend)}</div>
       <div style="font-size:9px;color:rgba(255,255,255,.5);margin-top:2px;">venc ${fmtDate(due)} · pag dia ${card.payDay}</div>
       <div style="margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.2);">
         <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;">a pagar</div>
-        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:rgba(255,255,255,.9);margin-top:2px;">${fmtBRL(pending)}</div>
+        <div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;font-weight:800;color:rgba(255,255,255,.9);margin-top:2px;">${fmtBRL(pending)}</div>
       </div>
     </button>`;
   }).join("");
@@ -925,7 +928,7 @@ function renderStep2(card){
   document.getElementById("scan-result-header").style.background=card.bg;
   document.getElementById("scan-result-header").innerHTML=`
     <div style="font-size:10px;color:rgba(255,255,255,.6);margin-bottom:2px;">${scanState.files.length} print(s) lido(s)</div>
-    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#fff;">${card.label}</div>
+    <div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:800;font-size:16px;color:#fff;">${card.label}</div>
     <div style="display:flex;gap:6px;margin-top:8px;">
       ${CARDS.map(c=>`<button onclick="changeScanCard('${c.id}')" style="padding:4px 8px;border-radius:6px;font-size:10px;font-family:inherit;background:${c.id===card.id?"rgba(255,255,255,.25)":"rgba(0,0,0,.3)"};color:#fff;border:none;">${c.shortLabel}</button>`).join("")}
     </div>`;
