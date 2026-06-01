@@ -34,9 +34,10 @@ a{color:#60a5fa;}
 #app{padding:12px 12px 100px;}
 
 /* ── cards ── */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;}
-.kpi-card{background:#13151c;border:1px solid #1e2128;border-radius:12px;padding:10px 12px;}
-.kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(12px,3.8vw,18px);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;}
+.kpi-card{background:#13151c;border:1px solid #1e2128;border-radius:12px;padding:11px 13px;}
+.kpi-card.wide{grid-column:1/-1;}
+.kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(16px,5vw,22px);margin-top:4px;white-space:nowrap;}
 .card-shortcuts{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .card-shortcuts::-webkit-scrollbar{display:none;}
 .card-btn{border-radius:12px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:3px;border:none;min-width:150px;flex-shrink:0;}
@@ -163,28 +164,41 @@ a{color:#60a5fa;}
 <div id="modal-card" class="overlay" style="display:none;" onclick="if(event.target===this)closeCardModal()">
  <div class="sheet" onclick="event.stopPropagation()">
   <div class="sheet-handle"></div>
-  <div id="card-modal-header" style="border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+  <div id="card-modal-header" style="border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
     <div>
       <div id="card-modal-name" style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#fff;"></div>
       <div id="card-modal-dates" style="font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;"></div>
     </div>
     <div id="card-modal-total" style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#fff;"></div>
   </div>
-  <div class="mb"><div class="field-label">Mês de referência</div>
-    <div style="display:flex;gap:8px;">
-      <select class="field-input" id="cm-month" style="flex:1;" onchange="updateCardModalHeader()"></select>
-      <input class="field-input" id="cm-year" type="number" inputmode="numeric" style="width:76px;" onchange="updateCardModalHeader()">
+  <!-- tabs -->
+  <div style="display:flex;gap:3px;background:#1a1d24;border-radius:10px;padding:3px;margin-bottom:14px;">
+    <button id="ctab-add"     onclick="setCardTab('add')"     style="flex:1;padding:7px 0;border-radius:8px;font-size:12px;font-family:inherit;background:#2a2d35;color:#e8e4dc;border:none;">Lançar</button>
+    <button id="ctab-history" onclick="setCardTab('history')" style="flex:1;padding:7px 0;border-radius:8px;font-size:12px;font-family:inherit;background:transparent;color:#555;border:none;">Histórico</button>
+  </div>
+  <!-- Add tab -->
+  <div id="card-tab-add">
+    <div class="mb"><div class="field-label">Mês de referência</div>
+      <div style="display:flex;gap:8px;">
+        <select class="field-input" id="cm-month" style="flex:1;" onchange="updateCardModalHeader()"></select>
+        <input class="field-input" id="cm-year" type="number" inputmode="numeric" style="width:76px;" onchange="updateCardModalHeader()">
+      </div>
+    </div>
+    <div class="mb"><div class="field-label">Repetir nos próximos meses</div>
+      <div id="future-btns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+    <div class="field-label">Itens da fatura</div>
+    <div id="card-items" style="margin-bottom:8px;"></div>
+    <button onclick="addCardItem()" style="background:#1e2128;color:#888;border-radius:10px;padding:10px;font-size:12px;width:100%;margin-bottom:16px;">+ adicionar item</button>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeCardModal()">Cancelar</button>
+      <button id="btn-save-card" class="btn-primary" onclick="saveCardModal()">Registrar Fatura</button>
     </div>
   </div>
-  <div class="mb"><div class="field-label">Repetir nos próximos meses</div>
-    <div id="future-btns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
-  </div>
-  <div class="field-label">Itens da fatura</div>
-  <div id="card-items" style="margin-bottom:8px;"></div>
-  <button onclick="addCardItem()" style="background:#1e2128;color:#888;border-radius:10px;padding:10px;font-size:12px;width:100%;margin-bottom:16px;">+ adicionar item</button>
-  <div class="btn-row">
-    <button class="btn-cancel" onclick="closeCardModal()">Cancelar</button>
-    <button id="btn-save-card" class="btn-primary" onclick="saveCardModal()">Registrar Fatura</button>
+  <!-- History tab -->
+  <div id="card-tab-history" style="display:none;">
+    <div id="card-history-list"></div>
+    <button class="btn-cancel" onclick="closeCardModal()" style="width:100%;margin-top:8px;">Fechar</button>
   </div>
  </div>
 </div>
@@ -358,10 +372,10 @@ function render(){
 
   // KPIs
   document.getElementById("kpi-grid").innerHTML=[
-    {l:"receita",v:inc,c:"#4ade80"},
-    {l:"gastos", v:exp,c:"#f87171"},
-    {l:"saldo",  v:bal,c:bal>=0?"#60a5fa":"#fb923c"},
-  ].map(k=>`<div class="kpi-card">
+    {l:"receita",v:inc,c:"#4ade80",wide:false},
+    {l:"gastos", v:exp,c:"#f87171",wide:false},
+    {l:"saldo",  v:bal,c:bal>=0?"#60a5fa":"#fb923c",wide:true},
+  ].map(k=>`<div class="kpi-card${k.wide?" wide":""}">
     <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;">${k.l}</div>
     <div class="kpi-val" style="color:${k.c};">${fmtBRL(k.v)}</div>
   </div>`).join("");
@@ -647,7 +661,44 @@ function closeEntryModal(){document.getElementById("modal-entry").style.display=
 // ══════════════════════════════════════════════════════
 let cardModal={cardId:null,futureMonths:0,items:[{desc:"",amount:""}]};
 
-function openCardModal(cardId){
+function setCardTab(t){
+  document.getElementById("card-tab-add").style.display     = t==="add"?"block":"none";
+  document.getElementById("card-tab-history").style.display = t==="history"?"block":"none";
+  document.getElementById("ctab-add").style.background     = t==="add"?"#2a2d35":"transparent";
+  document.getElementById("ctab-add").style.color           = t==="add"?"#e8e4dc":"#555";
+  document.getElementById("ctab-history").style.background = t==="history"?"#2a2d35":"transparent";
+  document.getElementById("ctab-history").style.color       = t==="history"?"#e8e4dc":"#555";
+  if(t==="history") renderCardHistory();
+}
+function renderCardHistory(){
+  const card=CARDS.find(c=>c.id===cardModal.cardId); if(!card) return;
+  const entries=state.entries
+    .filter(e=>e.category===card.category&&e.type==="expense")
+    .sort((a,b)=>b.year!==a.year?b.year-a.year:b.month-a.month);
+  const el=document.getElementById("card-history-list");
+  if(!entries.length){el.innerHTML=`<div style="color:#555;font-size:13px;text-align:center;padding:24px;">nenhum lançamento</div>`;return;}
+  el.innerHTML=entries.map(e=>`
+    <div style="background:#1a1d24;border:1px solid #2a2d35;border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:500;">${MONTHS[e.month]} ${e.year}</div>
+        <div style="font-size:11px;color:#555;margin-top:2px;">${e.desc}</div>
+      </div>
+      <input type="number" inputmode="decimal" value="${e.amount}"
+        onchange="updateCardHistoryEntry('${e.id}',this.value)"
+        style="width:90px;background:#13151c;border:1px solid #2a2d35;border-radius:8px;padding:6px 8px;color:#e8e4dc;font-size:13px;text-align:right;font-family:inherit;">
+      <button onclick="deleteCardHistoryEntry('${e.id}')" style="background:#2a1515;color:#f87171;width:30px;height:30px;border-radius:8px;flex-shrink:0;font-size:13px;">✕</button>
+    </div>`).join("");
+}
+function updateCardHistoryEntry(id,val){
+  const amt=parseFloat(val); if(isNaN(amt)||amt<=0) return;
+  state.entries=state.entries.map(e=>e.id===id?{...e,amount:amt}:e);
+  saveState(); render(); renderCardHistory();
+}
+function deleteCardHistoryEntry(id){
+  state.entries=state.entries.filter(e=>e.id!==id);
+  saveState(); render(); renderCardHistory();
+}
+  setCardTab("add");
   const card=CARDS.find(c=>c.id===cardId);
   cardModal={cardId,futureMonths:0,items:[{desc:"",amount:""}]};
   document.getElementById("cm-month").innerHTML=MONTHS.map((m,i)=>`<option value="${i}"${i===state.viewMonth?" selected":""}>${m}</option>`).join("");
