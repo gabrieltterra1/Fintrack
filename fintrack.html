@@ -698,6 +698,7 @@ function deleteCardHistoryEntry(id){
   state.entries=state.entries.filter(e=>e.id!==id);
   saveState(); render(); renderCardHistory();
 }
+function openCardModal(cardId){
   setCardTab("add");
   const card=CARDS.find(c=>c.id===cardId);
   cardModal={cardId,futureMonths:0,items:[{desc:"",amount:""}]};
