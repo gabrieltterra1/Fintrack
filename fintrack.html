@@ -34,10 +34,10 @@ a{color:#60a5fa;}
 #app{padding:12px 12px 100px;}
 
 /* ── cards ── */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;}
-.kpi-card{background:#13151c;border:1px solid #1e2128;border-radius:12px;padding:11px 13px;}
-.kpi-card.wide{grid-column:1/-1;}
-.kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(16px,5vw,22px);margin-top:4px;white-space:nowrap;}
+.kpi-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.kpi-card{background:#13151c;border:1px solid #1e2128;border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+.kpi-card.wide{} /* kept for compat */
+.kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;white-space:nowrap;}
 .card-shortcuts{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .card-shortcuts::-webkit-scrollbar{display:none;}
 .card-btn{border-radius:12px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:3px;border:none;min-width:150px;flex-shrink:0;}
@@ -372,11 +372,11 @@ function render(){
 
   // KPIs
   document.getElementById("kpi-grid").innerHTML=[
-    {l:"receita",v:inc,c:"#4ade80",wide:false},
-    {l:"gastos", v:exp,c:"#f87171",wide:false},
-    {l:"saldo",  v:bal,c:bal>=0?"#60a5fa":"#fb923c",wide:true},
-  ].map(k=>`<div class="kpi-card${k.wide?" wide":""}">
-    <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;">${k.l}</div>
+    {l:"Receita", v:inc, c:"#4ade80"},
+    {l:"Gastos",  v:exp, c:"#f87171"},
+    {l:"Saldo",   v:bal, c:bal>=0?"#60a5fa":"#fb923c"},
+  ].map(k=>`<div class="kpi-card">
+    <div style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;">${k.l}</div>
     <div class="kpi-val" style="color:${k.c};">${fmtBRL(k.v)}</div>
   </div>`).join("");
 
